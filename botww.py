@@ -14,7 +14,7 @@ import aiosqlite
 from rubpy.bot import BotClient, filters
 
 # ========== تنظیمات ==========
-BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
+BOT_TOKEN = "CBIIGG0BGNVXLBCNYCPHSAWFXIXWMIOIFQJJKSUDPZKTIDLEZNSYCFJQNABRMKHC"
 if not BOT_TOKEN:
     raise SystemExit("BOT_TOKEN ست نشده.")
 DB_PATH = Path(__file__).resolve().parent / "announcement_bot.db"
