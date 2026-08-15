@@ -526,4 +526,85 @@ async def handle_admin_flow(client: BotClient, chat_id: str, sender_id: str, tex
         user = await get_user(uid)
         if not user:
             await client.send_message(chat_id, f"❌ کاربر {uid} پیدا نشد.")
-            admin_state.pop(sender_id, No
+                    admin_state.pop(sender_id, None)  # <--- اصلاح شد (None بود)
+
+    elif step == "ban":
+        uid = text.strip()
+        if not uid:
+            await client.send_message(chat_id, "❌ شناسه نامعتبر.")
+            return
+        if await set_ban(uid, True):
+            await client.send_message(chat_id, f"🚫 کاربر {uid} بن شد.")
+        else:
+            await client.send_message(chat_id, f"❌ کاربر {uid} پیدا نشد.")
+        admin_state.pop(sender_id, None)
+
+    elif step == "unban":
+        uid = text.strip()
+        if not uid:
+            await client.send_message(chat_id, "❌ شناسه نامعتبر.")
+            return
+        if await set_ban(uid, False):
+            await client.send_message(chat_id, f"✅ کاربر {uid} آنبن شد.")
+        else:
+            await client.send_message(chat_id, f"❌ کاربر {uid} پیدا نشد.")
+        admin_state.pop(sender_id, None)
+
+    elif step == "add_admin":
+        uid = text.strip()
+        if not uid:
+            await client.send_message(chat_id, "❌ شناسه نامعتبر.")
+            return
+        await add_admin(uid)
+        await client.send_message(chat_id, f"👤 کاربر {uid} ادمین شد.")
+        admin_state.pop(sender_id, None)
+
+    elif step == "unmute":
+        uid = text.strip()
+        if not uid:
+            await client.send_message(chat_id, "❌ شناسه نامعتبر.")
+            return
+        user = await get_user(uid)
+        if not user:
+            await client.send_message(chat_id, f"❌ کاربر {uid} پیدا نشد.")
+            admin_state.pop(sender_id, None)
+            return
+        await unmute_user(uid)
+        await client.send_message(chat_id, f"🔇 محدودیت ۶ ساعته کاربر {uid} برداشته شد.")
+        admin_state.pop(sender_id, None)
+
+# ───────────────────────── ارسال به کانال ─────────────────────────
+def _writable_tmp_dir() -> Path:
+    import tempfile
+    d = Path(__file__).resolve().parent / "bot_tmp"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+async def _send_to_channel(client: BotClient, channel_id: str, file_id: str, text: str) -> bool:
+    tmp_dir = _writable_tmp_dir()
+    safe_name = "".join(c if c.isalnum() else "_" for c in str(file_id))[-40:]
+    tmp_path = str(tmp_dir / f"announce_{safe_name}.jpg")
+
+    try:
+        saved = await client.download_file(file_id, save_as=tmp_path)
+        path_to_send = saved if isinstance(saved, str) else tmp_path
+        if not path_to_send or not Path(path_to_send).is_file():
+            log.error("Download failed")
+            return False
+
+        await client.send_file(channel_id, path_to_send, caption=text)
+        return True
+    except Exception as e:
+        log.exception("_send_to_channel error")
+        return False
+
+# ───────────────────────── اجرا ─────────────────────────
+async def main():
+    await init_db()
+    print("🚀 ربات بیانیه روبیکا با محدودیت‌های جدید روشن شد!")
+    print(f"⏳ هر کاربر هر {COOLDOWN_MINUTES} دقیقه یک بیانیه")
+    print(f"🔇 کلمات ممنوعه = ۶ ساعت محرومیت")
+    await app.run()
+
+if __name__ == "__main__":
+    asyncio.run(main())
