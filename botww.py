@@ -525,9 +525,9 @@ async def handle_admin_flow(client: BotClient, chat_id: str, sender_id: str, tex
             return
         user = await get_user(uid)
         if not user:
-            await client.send_message(chat_id, f"❌ کاربر {uid} پیدا نشد.")
-                    admin_state.pop(sender_id, None)  # <--- اصلاح شد (None بود)
-
+    await client.send_message(chat_id, f"❌ کاربر {uid} پیدا نشد.")
+    admin_state.pop(sender_id, None)  # <--- اینجا درسته
+    return
     elif step == "ban":
         uid = text.strip()
         if not uid:
